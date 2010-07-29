@@ -128,6 +128,284 @@ print_hex (const unsigned char *bytes,
 
 #define DEFAULT_SIZE 100
 
+#include <inttypes.h>
+#define DBUS_INT64_PRINTF_ARGUMENT PRIi64
+#define DBUS_UINT64_PRINTF_ARGUMENT PRIu64
+#define MAXPFX 4096
+
+static int
+pf_can_simple(DBusMessageIter *iter)
+{
+  switch (dbus_message_iter_get_arg_type(iter))
+    {
+      case DBUS_TYPE_STRING:
+      case DBUS_TYPE_INT16:
+      case DBUS_TYPE_INT32:
+      case DBUS_TYPE_UINT16:
+      case DBUS_TYPE_UINT32:
+      case DBUS_TYPE_INT64:
+      case DBUS_TYPE_UINT64:
+      case DBUS_TYPE_BYTE:
+      case DBUS_TYPE_BOOLEAN:
+      case DBUS_TYPE_DOUBLE:
+        return 1;
+      default:
+        return 0;
+    }
+}
+
+static void pf_key(DBusMessageIter *iter, const char *pfx, char *buf, size_t sz)
+{
+  char *sv;
+  dbus_bool_t bv;
+  dbus_int16_t i16v;
+  dbus_int32_t i32v;
+  dbus_int64_t i64v;
+  dbus_uint16_t u16v;
+  dbus_uint32_t u32v;
+  dbus_uint64_t u64v;
+  unsigned char u8v;
+  double dv;
+
+  switch (dbus_message_iter_get_arg_type(iter)) {
+    case DBUS_TYPE_STRING:
+      dbus_message_iter_get_basic(iter, &sv);
+      snprintf(buf, sz, "%s/%s", pfx, sv);
+      break;
+    case DBUS_TYPE_BOOLEAN:
+      dbus_message_iter_get_basic(iter, &bv);
+      snprintf(buf, sz, "%s/%s", pfx, (bv ? "true" : "false"));
+      break;
+    case DBUS_TYPE_INT16:
+      dbus_message_iter_get_basic(iter, &i16v);
+      snprintf(buf, sz, "%s/%d", pfx, i16v);
+      break;
+    case DBUS_TYPE_INT32:
+      dbus_message_iter_get_basic(iter, &i32v);
+      snprintf(buf, sz, "%s/%d", pfx, i32v);
+      break;
+    case DBUS_TYPE_INT64:
+      dbus_message_iter_get_basic(iter, &i64v);
+#ifdef DBUS_INT64_PRINTF_ARGUMENT
+      snprintf(buf, sz, "%s/%" DBUS_INT64_PRINTF_ARGUMENT, pfx, i64v);
+#else
+      snprintf(buf, sz, "%s/[int64]", pfx);
+#endif
+      break;
+    case DBUS_TYPE_UINT16:
+      dbus_message_iter_get_basic(iter, &u16v);
+      snprintf(buf, sz, "%s/%u", pfx, u16v);
+      break;
+    case DBUS_TYPE_UINT32:
+      dbus_message_iter_get_basic(iter, &u32v);
+      snprintf(buf, sz, "%s/%u", pfx, u32v);
+      break;
+    case DBUS_TYPE_UINT64:
+      dbus_message_iter_get_basic(iter, &u64v);
+#ifdef DBUS_UINT64_PRINTF_ARGUMENT
+      snprintf(buf, sz, "%s/%" DBUS_UINT64_PRINTF_ARGUMENT, pfx, u64v);
+#else
+      snprintf(buf, sz, "%s/[uint64]", pfx);
+#endif
+      break;
+    case DBUS_TYPE_BYTE:
+      dbus_message_iter_get_basic(iter, &u8v);
+      snprintf(buf, sz, "%s/%02x", pfx, (unsigned int)u8v & 0xFF);
+      break;
+    case DBUS_TYPE_DOUBLE:
+      dbus_message_iter_get_basic(iter, &dv);
+      snprintf(buf, sz, "%s/%g", pfx, dv);
+      break;
+    default:
+      snprintf(buf, sz, "%s/[pf-unknown]", pfx);
+      break;
+  }
+}
+
+static void print_fixed_iter(DBusMessageIter *iter, const char *pfx, int all);
+
+static void pf_string(DBusMessageIter *iter, const char *pfx)
+{
+  char *val;
+  dbus_message_iter_get_basic(iter, &val);
+  printf("%s%s%s\n", pfx, pfx[0] ? " " : "", val);
+}
+
+static void pf_boolean(DBusMessageIter *iter, const char *pfx)
+{
+  dbus_bool_t bv;
+  dbus_message_iter_get_basic(iter, &bv);
+  printf("%s%s%s\n", pfx, pfx[0] ? " " : "", (bv ? "true" : "false"));
+}
+
+static void pf_uint16(DBusMessageIter *iter, const char *pfx)
+{
+  dbus_uint16_t uv;
+  dbus_message_iter_get_basic(iter, &uv);
+  printf("%s%s%u\n", pfx, pfx[0] ? " " : "", uv);
+}
+
+static void pf_int16(DBusMessageIter *iter, const char *pfx)
+{
+  dbus_int16_t iv;
+  dbus_message_iter_get_basic(iter, &iv);
+  printf("%s%s%d\n", pfx, pfx[0] ? " " : "", iv);
+}
+
+static void pf_uint32(DBusMessageIter *iter, const char *pfx)
+{
+  dbus_uint32_t uv;
+  dbus_message_iter_get_basic(iter, &uv);
+  printf("%s%s%u\n", pfx, pfx[0] ? " " : "", uv);
+}
+
+static void pf_int32(DBusMessageIter *iter, const char *pfx)
+{
+  dbus_int32_t iv;
+  dbus_message_iter_get_basic(iter, &iv);
+  printf("%s%s%d\n", pfx, pfx[0] ? " " : "", iv);
+}
+
+static void pf_uint64(DBusMessageIter *iter, const char *pfx)
+{
+  dbus_uint64_t uv;
+  dbus_message_iter_get_basic(iter, &uv);
+#ifdef DBUS_UINT64_PRINTF_ARGUMENT
+  printf("%s%s%" DBUS_UINT64_PRINTF_ARGUMENT "\n", pfx, pfx[0] ? " " : "", uv);
+#else
+  printf("%s%s[uint64]\n", pfx, pfx[0] ? " " : "");
+#endif
+}
+
+static void pf_int64(DBusMessageIter *iter, const char *pfx)
+{
+  dbus_int64_t iv;
+  dbus_message_iter_get_basic(iter, &iv);
+#ifdef DBUS_INT64_PRINTF_ARGUMENT
+  printf("%s%s%" DBUS_INT64_PRINTF_ARGUMENT "\n", pfx, pfx[0] ? " " : "", iv);
+#else
+  printf("%s%s[int64]\n", pfx, pfx[0] ? " " : "");
+#endif
+}
+
+static void pf_double(DBusMessageIter *iter, const char *pfx)
+{
+  double dv;
+  dbus_message_iter_get_basic(iter, &dv);
+  printf("%s%s%g\n", pfx, pfx[0] ? " " : "", dv);
+}
+
+static void pf_byte(DBusMessageIter *iter, const char *pfx)
+{
+  unsigned char bv;
+  dbus_message_iter_get_basic(iter, &bv);
+  printf("%s%s%02x\n", pfx, pfx[0] ? " " : "", (unsigned int)bv & 0xFF);
+}
+
+static void pf_array(DBusMessageIter *iter, const char *pfx)
+{
+  int type;
+  DBusMessageIter subiter;
+  char npfx[MAXPFX];
+  int i = 0;
+
+  dbus_message_iter_recurse(iter, &subiter);
+  type = dbus_message_iter_get_arg_type(&subiter);
+
+  while (type != DBUS_TYPE_INVALID)
+    {
+      snprintf(npfx, sizeof(npfx), "%s/%d", pfx, i);
+      print_fixed_iter(&subiter, npfx, 0);
+      dbus_message_iter_next(&subiter);
+      type = dbus_message_iter_get_arg_type(&subiter);
+      i++;
+    }
+}
+
+static void pf_variant(DBusMessageIter *iter, const char *pfx)
+{
+  DBusMessageIter subiter;
+  dbus_message_iter_recurse(iter, &subiter);
+  print_fixed_iter(&subiter, pfx, 0);
+}
+
+static void pf_dict(DBusMessageIter *iter, const char *pfx)
+{
+  DBusMessageIter subiter;
+  char npfx[MAXPFX];
+
+  dbus_message_iter_recurse(iter, &subiter);
+  /* Nasty hack to make string -> thing dicts more parseable. */
+  if (pf_can_simple(&subiter))
+    {
+      pf_key(&subiter, pfx, npfx, sizeof(npfx));
+    }
+  else
+    {
+      snprintf(npfx, MAXPFX, "%s/[complex-key]", pfx);
+    }
+  dbus_message_iter_next(&subiter);
+  print_fixed_iter(&subiter, npfx, 0);
+}
+
+static void print_fixed_iter(DBusMessageIter *iter, const char *pfx, int all)
+{
+  static struct {
+    int type;
+    void (*func)(DBusMessageIter *iter, const char *pfx);
+  } printers[] = {
+    { DBUS_TYPE_STRING, pf_string },
+    { DBUS_TYPE_ARRAY, pf_array },
+    { DBUS_TYPE_STRUCT, pf_array }, /* yes, really. They're identical. */
+    { DBUS_TYPE_VARIANT, pf_variant },
+    { DBUS_TYPE_DICT_ENTRY, pf_dict },
+    { DBUS_TYPE_BOOLEAN, pf_boolean },
+    { DBUS_TYPE_UINT32, pf_uint32 },
+    { DBUS_TYPE_INT32, pf_int32 },
+    { DBUS_TYPE_SIGNATURE, pf_string },
+    { DBUS_TYPE_OBJECT_PATH, pf_string },
+    { DBUS_TYPE_INT16, pf_int16 },
+    { DBUS_TYPE_UINT16, pf_uint16 },
+    { DBUS_TYPE_INT64, pf_int64 },
+    { DBUS_TYPE_UINT64, pf_uint64 },
+    { DBUS_TYPE_DOUBLE, pf_double },
+    { DBUS_TYPE_BYTE, pf_byte },
+    { 0, NULL }
+  };
+  int type;
+  int i;
+
+  do
+    {
+      type = dbus_message_iter_get_arg_type(iter);
+      if (type == DBUS_TYPE_INVALID)
+        return;
+      for (i = 0; printers[i].func; i++)
+        {
+          if (printers[i].type == type)
+            {
+              printers[i].func(iter, pfx);
+              break;
+            }
+        }
+      if (!printers[i].func)
+        {
+          printf("print-fixed-iter: no idea what %d is\n", type);
+        }
+    }
+  while (all && dbus_message_iter_next(iter));
+}
+
+void print_message_fixed(DBusMessage *msg)
+{
+  DBusMessageIter iter;
+  int type;
+
+  type = dbus_message_get_type(msg);
+  dbus_message_iter_init(msg, &iter);
+  print_fixed_iter(&iter, "", 1);
+}
+
 static void
 print_ay (DBusMessageIter *iter, int depth)
 {
