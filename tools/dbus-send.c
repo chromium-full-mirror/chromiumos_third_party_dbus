@@ -54,7 +54,7 @@ static void usage (int ecode) _DBUS_GNUC_NORETURN;
 static void
 usage (int ecode)
 {
-  fprintf (stderr, "Usage: %s [--help] [--system | --session | --bus=ADDRESS | --peer=ADDRESS] [--dest=NAME] [--type=TYPE] [--print-reply[=literal]] [--reply-timeout=MSEC] <destination object path> <message name> [contents ...]\n", appname);
+  fprintf (stderr, "Usage: %s [--help] [--system | --session | --bus=ADDRESS | --peer=ADDRESS] [--dest=NAME] [--type=TYPE] [--print-reply[=literal]] [--fixed] [--reply-timeout=MSEC] <destination object path> <message name> [contents ...]\n", appname);
   exit (ecode);
 }
 
@@ -326,6 +326,7 @@ main (int argc, char *argv[])
   const char *sender = NULL;
   int is_bus = FALSE;
   int session_or_system = FALSE;
+  int fixed = 0;
 
   appname = argv[0];
   
@@ -427,6 +428,8 @@ main (int argc, char *argv[])
 	type_str = strchr (arg, '=') + 1;
       else if (!strcmp(arg, "--help"))
 	usage (0);
+      else if (!strcmp(arg, "--fixed"))
+        fixed = 1;
       else if (arg[0] == '-')
 	usage (1);
       else if (path == NULL)
@@ -697,7 +700,10 @@ main (int argc, char *argv[])
           long sec, usec;
 
           _dbus_get_real_time (&sec, &usec);
-          print_message (reply, print_reply_literal, sec, usec);
+          if (fixed)
+            print_message_fixed (reply);
+          else
+            print_message (reply, print_reply_literal, sec, usec);
           dbus_message_unref (reply);
         }
     }
