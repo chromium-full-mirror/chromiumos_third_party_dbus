@@ -27,6 +27,7 @@
 #include <string.h>
 #include <dbus/dbus.h>
 
+void print_message_fixed (DBusMessage *message);
 void print_message (DBusMessage *message, dbus_bool_t literal, dbus_int64_t sec, long usec);
 
 #endif /* DBUS_PRINT_MESSAGE_H */
