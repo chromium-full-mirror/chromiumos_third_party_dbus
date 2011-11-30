@@ -169,6 +169,12 @@ append_arg (DBusMessageIter *iter, int type, const char *value)
         ret = dbus_message_iter_close_container (iter, &subiter);
         break;
       }
+
+    case DBUS_TYPE_UNIX_FD:
+      uint32 = strtoul (value, NULL, 0);
+      ret = dbus_message_iter_append_basic (iter, DBUS_TYPE_UNIX_FD, &uint32);
+      break;
+
     default:
       fprintf (stderr, "%s: Unsupported data type %c\n", appname, (char) type);
       exit (1);
@@ -325,6 +331,8 @@ type_from_name (const char *arg, dbus_bool_t allow_container_types)
 
         type = DBUS_TYPE_VARIANT;
     }
+  else if (!strcmp (arg, "fd"))
+    type = DBUS_TYPE_UNIX_FD;
   else
     {
       fprintf (stderr, "%s: Unknown type \"%s\"\n", appname, arg);
