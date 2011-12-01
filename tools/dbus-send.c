@@ -243,6 +243,8 @@ append_array (DBusMessageIter *iter, int type, const char *value)
   free (buffer);
 }
 
+static int type_from_name(const char *name);
+
 static void
 append_dict (DBusMessageIter *iter, int keytype, int valtype, const char *value)
 {
@@ -268,7 +270,31 @@ append_dict (DBusMessageIter *iter, int keytype, int valtype, const char *value)
 	  fprintf (stderr, "%s: Malformed dictionary\n", appname);
 	  exit (1);
 	}
-      append_arg (&subiter, valtype, val);
+      if (valtype == DBUS_TYPE_VARIANT)
+        {
+	  char sig[2];
+	  char *c = strchr(val, ':');
+	  if (!c)
+	    {
+	      fprintf (stderr, "Missing type in variant dict\n");
+	      exit (1);
+	    }
+	  *(c++) = '\0';
+	  sig[0] = type_from_name(val);
+	  sig[1] = '\0';
+	  DBusMessageIter subsubiter;
+	  handle_oom (dbus_message_iter_open_container (&subiter,
+							DBUS_TYPE_VARIANT,
+							sig,
+							&subsubiter));
+	  append_arg(&subsubiter, sig[0], c);
+	  handle_oom (dbus_message_iter_close_container (&subiter,
+							 &subsubiter));
+	}
+      else
+        {
+	  append_arg (&subiter, valtype, val);
+	}
 
       handle_oom (dbus_message_iter_close_container (iter, &subiter));
       val = strtok (NULL, ",");
@@ -641,7 +667,11 @@ main (int argc, char *argv[])
 	      exit (1);
 	    }
 	  *(c++) = 0;
-	  secondary_type = type_from_name (arg);
+	  if (!strcmp(arg, "variant"))
+	    /* Hack: support variant values for dictionaries. */
+	    secondary_type = DBUS_TYPE_VARIANT;
+	  else
+	    secondary_type = type_from_name (arg);
 	  sig[0] = DBUS_DICT_ENTRY_BEGIN_CHAR;
 	  sig[1] = type2;
 	  sig[2] = secondary_type;
