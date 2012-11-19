@@ -137,4 +137,7 @@
 
   <include if_selinux_enabled="yes" selinux_root_relative="yes">contexts/dbus_contexts</include>
 
+  <!-- Chromium talks to most services on the bus so needs a relatively
+       large number of match rules. -->
+  <limit name="max_match_rules_per_connection">4096</limit>
 </busconfig>
