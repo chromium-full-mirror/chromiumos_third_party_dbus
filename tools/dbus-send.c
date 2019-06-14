@@ -261,6 +261,7 @@ main (int argc, char *argv[])
   int message_type = DBUS_MESSAGE_TYPE_SIGNAL;
   const char *type_str = NULL;
   const char *address = NULL;
+  const char *sender = NULL;
   int is_bus = FALSE;
   int session_or_system = FALSE;
 
@@ -310,6 +311,16 @@ main (int argc, char *argv[])
           if (address[0] == '\0')
             {
               fprintf (stderr, "\"--peer=\" and \"--bus=\" require an ADDRESS\n");
+              usage (1);
+            }
+        }
+      else if (strstr (arg, "--sender=") == arg)
+        {
+          sender = strchr (arg, '=') + 1;
+
+          if (sender[0] == '\0')
+            {
+              fprintf (stderr, "\"--sender=\" requires a NAME\n");
               usage (1);
             }
         }
@@ -417,6 +428,27 @@ main (int argc, char *argv[])
           fprintf (stderr, "Failed to register on connection to \"%s\" message bus: %s\n",
                    address, error.message);
           dbus_error_free (&error);
+          exit (1);
+        }
+    }
+
+  if (sender != NULL)
+    {
+      switch(dbus_bus_request_name (connection, sender, DBUS_NAME_FLAG_DO_NOT_QUEUE, &error))
+        {
+        case DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER:
+          /* success */
+          break;
+        case DBUS_REQUEST_NAME_REPLY_EXISTS:
+          fprintf (stderr, "Requested name \"%s\" already has owner\n", sender);
+          exit (1);
+        case -1:
+          fprintf (stderr, "Failed to request sender name \"%s\": %s\n", sender, error.message);
+          dbus_error_free(&error);
+          exit (1);
+        default:
+          /* This should be unreachable if the bus is compliant */
+          fprintf (stderr, "Request of sender name failed unexpectedly\n");
           exit (1);
         }
     }
