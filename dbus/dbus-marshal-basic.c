@@ -741,6 +741,8 @@ marshal_len_followed_by_bytes (int                  marshal_as,
 
   if (marshal_as == MARSHAL_AS_SIGNATURE)
     {
+      if (data_len > DBUS_MAXIMUM_SIGNATURE_LENGTH || data_len > 255)
+        return FALSE;
       _dbus_assert (data_len <= DBUS_MAXIMUM_SIGNATURE_LENGTH);
       _dbus_assert (data_len <= 255); /* same as max sig len right now */
       
