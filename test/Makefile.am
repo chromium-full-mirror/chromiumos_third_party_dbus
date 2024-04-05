@@ -629,6 +629,7 @@ in_data = \
 	data/valid-config-files/max-match-rules-per-connection.conf.in \
 	data/valid-config-files/max-names-per-connection.conf.in \
 	data/valid-config-files/max-replies-per-connection.conf.in \
+	data/valid-config-files/max-messages-per-connection.conf.in \
 	data/valid-config-files/multi-user.conf.in \
 	data/valid-config-files/pending-fd-timeout.conf.in \
 	data/valid-config-files/send-destination-prefix-rules.conf.in \

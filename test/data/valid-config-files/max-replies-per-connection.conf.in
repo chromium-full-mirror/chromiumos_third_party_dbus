@@ -15,4 +15,6 @@
   </policy>
 
   <limit name="max_replies_per_connection">3</limit>
+  <!-- Ensure that the limit for pending sent messages is greater than the max_replies_per_connection -->
+  <limit name="max_messages_per_connection">4</limit>
 </busconfig>

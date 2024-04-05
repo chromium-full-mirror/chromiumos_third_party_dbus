@@ -552,6 +552,12 @@ bus_config_parser_new (const DBusString      *basedir,
        * that require a reply
        */
       parser->limits.max_replies_per_connection = 128;
+
+      /* Limit the maximum number of pending messages addressed to a
+       * connection. The default is half the pending replies limit for
+       * the connection.
+       */
+      parser->limits.max_messages_per_connection = 64;
     }
       
   parser->refcount = 1;
@@ -2169,6 +2175,12 @@ set_limit (BusConfigParser *parser,
       must_be_int = TRUE;
       parser->limits.max_replies_per_connection = value;
     }
+  else if (strcmp (name, "max_messages_per_connection") == 0)
+    {
+      must_be_positive = TRUE;
+      must_be_int = TRUE;
+      parser->limits.max_messages_per_connection = value;
+    }
   else if (strcmp (name, "max_containers") == 0)
     {
       must_be_positive = TRUE;
@@ -3476,6 +3488,7 @@ limits_equal (const BusLimits *a,
      && a->max_pending_activations == b->max_pending_activations
      && a->max_services_per_connection == b->max_services_per_connection
      && a->max_match_rules_per_connection == b->max_match_rules_per_connection
+     && a->max_messages_per_connection == b->max_messages_per_connection
      && a->max_replies_per_connection == b->max_replies_per_connection
      && a->reply_timeout == b->reply_timeout);
 }

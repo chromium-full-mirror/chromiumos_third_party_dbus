@@ -1512,6 +1512,12 @@ bus_context_get_max_replies_per_connection (BusContext *context)
 }
 
 int
+bus_context_get_max_messages_per_connection (BusContext *context)
+{
+  return context->limits.max_messages_per_connection;
+}
+
+int
 bus_context_get_reply_timeout (BusContext *context)
 {
   return context->limits.reply_timeout;
