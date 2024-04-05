@@ -99,9 +99,11 @@ typedef struct {
     DBusConnection *left_conn;
 
     DBusConnection *right_conn;
+    DBusConnection *second_right_conn;
     GQueue held_messages;
     gboolean right_conn_echo;
     gboolean right_conn_hold;
+    gboolean second_right_conn_hold;
     gboolean wait_forever_called;
 
     gchar *tmp_runtime_dir;
@@ -160,6 +162,7 @@ typedef struct {
     const char *config_file;
     TestUser user;
     enum { SPECIFY_ADDRESS = 0, RELY_ON_DEFAULT } connect_mode;
+    gboolean use_second_right_connection;
 } Config;
 
 static void
@@ -198,6 +201,7 @@ setup (Fixture *f,
     }
 
   f->left_conn = test_connect_to_bus (f->ctx, f->address);
+  f->second_right_conn = NULL;
 
   if (config != NULL && config->connect_mode == RELY_ON_DEFAULT)
     {
@@ -212,6 +216,9 @@ setup (Fixture *f,
   else
     {
       f->right_conn = test_connect_to_bus (f->ctx, f->address);
+
+      if (config != NULL && config->use_second_right_connection)
+        f->second_right_conn = test_connect_to_bus (f->ctx, f->address);
     }
 }
 
@@ -231,6 +238,14 @@ add_hold_filter (Fixture *f)
     g_error ("OOM");
 
   f->right_conn_hold = TRUE;
+
+  if (f->second_right_conn)
+    {
+      if (!dbus_connection_add_filter (f->second_right_conn, hold_filter, f, NULL))
+        g_error ("OOM");
+
+      f->second_right_conn_hold = TRUE;
+    }
 }
 
 static void
@@ -869,6 +884,143 @@ test_max_replies_per_connection (Fixture *f,
   g_assert_cmpuint (g_queue_get_length (&received), ==, 0);
   g_assert_cmpuint (g_queue_get_length (&errors), ==, 0);
   g_queue_clear (&received);
+  g_queue_clear (&errors);
+}
+
+static void
+test_max_messages_per_connection (Fixture *f,
+    gconstpointer context)
+{
+  GQueue errors = G_QUEUE_INIT;
+  DBusMessage *m;
+  DBusPendingCall *pc;
+  guint i;
+  DBusError error = DBUS_ERROR_INIT;
+
+  if (f->skip)
+    return;
+
+  add_hold_filter (f);
+
+  /* Send one message to first right connection */
+  m = dbus_message_new_method_call (
+      dbus_bus_get_unique_name (f->right_conn), "/",
+      "com.example", "Spam");
+
+  if (m == NULL)
+    g_error ("OOM");
+
+  if (!dbus_connection_send_with_reply (f->left_conn, m, &pc,
+                                        DBUS_TIMEOUT_INFINITE) ||
+      pc == NULL)
+    g_error ("OOM");
+
+  if (dbus_pending_call_get_completed (pc))
+    pc_enqueue (pc, &errors);
+  else if (!dbus_pending_call_set_notify (pc, pc_enqueue, &errors,
+        NULL))
+    g_error ("OOM");
+
+  dbus_pending_call_unref (pc);
+  dbus_message_unref (m);
+
+  /* Saturate the limit for pending sent messages to second right connection */
+  for (i = 0; i < 3; i++)
+    {
+      m = dbus_message_new_method_call (
+          dbus_bus_get_unique_name (f->second_right_conn), "/",
+          "com.example", "Spam");
+
+      if (m == NULL)
+        g_error ("OOM");
+
+      if (!dbus_connection_send_with_reply (f->left_conn, m, &pc,
+                                            DBUS_TIMEOUT_INFINITE) ||
+          pc == NULL)
+        g_error ("OOM");
+
+      if (dbus_pending_call_get_completed (pc))
+        pc_enqueue (pc, &errors);
+      else if (!dbus_pending_call_set_notify (pc, pc_enqueue, &errors,
+            NULL))
+        g_error ("OOM");
+
+      dbus_pending_call_unref (pc);
+      dbus_message_unref (m);
+    }
+
+  while (g_queue_get_length (&f->held_messages) + g_queue_get_length (&errors) < 4)
+    test_main_context_iterate (f->ctx, TRUE);
+
+  g_assert_cmpuint (g_queue_get_length (&errors), ==, 0);
+  g_assert_cmpuint (g_queue_get_length (&f->held_messages), ==, 4);
+
+  /* Send one message over the limit for the second right connection */
+  m = dbus_message_new_method_call (
+      dbus_bus_get_unique_name (f->second_right_conn), "/",
+      "com.example", "Spam");
+
+  if (m == NULL)
+    g_error ("OOM");
+
+  if (!dbus_connection_send_with_reply (f->left_conn, m, &pc,
+                                        DBUS_TIMEOUT_INFINITE) ||
+      pc == NULL)
+    g_error ("OOM");
+
+  if (dbus_pending_call_get_completed (pc))
+    pc_enqueue (pc, &errors);
+  else if (!dbus_pending_call_set_notify (pc, pc_enqueue, &errors,
+        NULL))
+    g_error ("OOM");
+
+  dbus_pending_call_unref (pc);
+  dbus_message_unref (m);
+
+  while (g_queue_get_length (&f->held_messages) + g_queue_get_length (&errors) < 5)
+    test_main_context_iterate (f->ctx, TRUE);
+
+  /* Check that the message sent to the second right has generated an error. */
+  g_assert_cmpuint (g_queue_get_length (&errors), ==, 1);
+  g_assert_cmpuint (g_queue_get_length (&f->held_messages), ==, 4);
+
+  m = g_queue_pop_head (&errors);
+  g_assert (m != NULL);
+
+  if (!dbus_set_error_from_message (&error, m))
+    g_error ("Unexpected success");
+
+  g_assert_cmpstr (error.name, ==, DBUS_ERROR_LIMITS_EXCEEDED);
+  dbus_error_free (&error);
+
+  m = dbus_message_new_method_call (
+      dbus_bus_get_unique_name (f->right_conn), "/",
+      "com.example", "Spam");
+
+  if (m == NULL)
+    g_error ("OOM");
+
+  if (!dbus_connection_send_with_reply (f->left_conn, m, &pc,
+                                        DBUS_TIMEOUT_INFINITE) ||
+      pc == NULL)
+    g_error ("OOM");
+
+  if (dbus_pending_call_get_completed (pc))
+    pc_enqueue (pc, &errors);
+  else if (!dbus_pending_call_set_notify (pc, pc_enqueue, &errors,
+        NULL))
+    g_error ("OOM");
+
+  dbus_pending_call_unref (pc);
+  dbus_message_unref (m);
+
+  while (g_queue_get_length (&f->held_messages) + g_queue_get_length (&errors) < 5)
+    test_main_context_iterate (f->ctx, TRUE);
+
+  /* Check that the message to the first right connection has been received and does not generate an error. */
+  g_assert_cmpuint (g_queue_get_length (&errors), ==, 0);
+  g_assert_cmpuint (g_queue_get_length (&f->held_messages), ==, 5);
+
   g_queue_clear (&errors);
 }
 
@@ -2152,8 +2304,26 @@ teardown (Fixture *f,
       dbus_connection_close (f->right_conn);
     }
 
+  if (f->second_right_conn != NULL)
+    {
+      GList *link;
+      if (f->second_right_conn_hold)
+        {
+          dbus_connection_remove_filter (f->second_right_conn, hold_filter, f);
+          f->second_right_conn_hold = FALSE;
+        }
+
+      for (link = f->held_messages.head; link != NULL; link = link->next)
+        dbus_message_unref (link->data);
+
+      g_queue_clear (&f->held_messages);
+      test_connection_shutdown (f->ctx, f->second_right_conn);
+      dbus_connection_close (f->second_right_conn);
+    }
+
   dbus_clear_connection (&f->left_conn);
   dbus_clear_connection (&f->right_conn);
+  dbus_clear_connection (&f->second_right_conn);
 
   if (f->daemon_pid != 0)
     {
@@ -2189,55 +2359,60 @@ teardown (Fixture *f,
 
 static Config limited_config = {
     "34393", 10000, "valid-config-files/incoming-limit.conf",
-    TEST_USER_ME, SPECIFY_ADDRESS
+    TEST_USER_ME, SPECIFY_ADDRESS, FALSE
 };
 
 static Config finite_timeout_config = {
     NULL, 1, "valid-config-files/finite-timeout.conf",
-    TEST_USER_ME, SPECIFY_ADDRESS
+    TEST_USER_ME, SPECIFY_ADDRESS, FALSE
 };
 
 #ifdef DBUS_UNIX
 static Config listen_unix_runtime_config = {
     "61303", 1, "valid-config-files/listen-unix-runtime.conf",
-    TEST_USER_ME, RELY_ON_DEFAULT
+    TEST_USER_ME, RELY_ON_DEFAULT, FALSE
 };
 #endif
 
 static Config max_completed_connections_config = {
     NULL, 1, "valid-config-files/max-completed-connections.conf",
-    TEST_USER_ME, SPECIFY_ADDRESS
+    TEST_USER_ME, SPECIFY_ADDRESS, FALSE
 };
 
 static Config max_connections_per_user_config = {
     NULL, 1, "valid-config-files/max-connections-per-user.conf",
-    TEST_USER_ME, SPECIFY_ADDRESS
+    TEST_USER_ME, SPECIFY_ADDRESS, FALSE
 };
 
 static Config max_replies_per_connection_config = {
     NULL, 1, "valid-config-files/max-replies-per-connection.conf",
-    TEST_USER_ME, SPECIFY_ADDRESS
+    TEST_USER_ME, SPECIFY_ADDRESS, FALSE
+};
+
+static Config max_messages_per_connection_config = {
+    NULL, 1, "valid-config-files/max-messages-per-connection.conf",
+    TEST_USER_ME, SPECIFY_ADDRESS, TRUE
 };
 
 static Config max_match_rules_per_connection_config = {
     NULL, 1, "valid-config-files/max-match-rules-per-connection.conf",
-    TEST_USER_ME, SPECIFY_ADDRESS
+    TEST_USER_ME, SPECIFY_ADDRESS, FALSE
 };
 
 static Config max_names_per_connection_config = {
     NULL, 1, "valid-config-files/max-names-per-connection.conf",
-    TEST_USER_ME, SPECIFY_ADDRESS
+    TEST_USER_ME, SPECIFY_ADDRESS, FALSE
 };
 
 #if defined(DBUS_UNIX) && defined(HAVE_UNIX_FD_PASSING) && defined(HAVE_GIO_UNIX)
 static Config pending_fd_timeout_config = {
     NULL, 1, "valid-config-files/pending-fd-timeout.conf",
-    TEST_USER_ME, SPECIFY_ADDRESS
+    TEST_USER_ME, SPECIFY_ADDRESS, FALSE
 };
 
 static Config count_fds_config = {
     NULL, 1, "valid-config-files/count-fds.conf",
-    TEST_USER_ME, SPECIFY_ADDRESS
+    TEST_USER_ME, SPECIFY_ADDRESS, FALSE
 };
 #endif
 
@@ -2246,7 +2421,7 @@ static Config as_another_user_config = {
     NULL, 1, "valid-config-files/as-another-user.conf",
     /* We start the dbus-daemon as root and drop privileges, like the
      * real system bus does */
-    TEST_USER_ROOT, SPECIFY_ADDRESS
+    TEST_USER_ROOT, SPECIFY_ADDRESS, FALSE
 };
 #endif
 
@@ -2276,6 +2451,9 @@ main (int argc,
   g_test_add ("/limits/max-replies-per-connection", Fixture,
       &max_replies_per_connection_config,
       setup, test_max_replies_per_connection, teardown);
+  g_test_add ("/limits/max-sent-pending-messages-per-connection", Fixture,
+      &max_messages_per_connection_config,
+      setup, test_max_messages_per_connection, teardown);
   g_test_add ("/limits/max-match-rules-per-connection", Fixture,
       &max_match_rules_per_connection_config,
       setup, test_max_match_rules_per_connection, teardown);

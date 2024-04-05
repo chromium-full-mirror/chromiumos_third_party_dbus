@@ -1927,7 +1927,8 @@ bus_connections_expect_reply (BusConnections  *connections,
   dbus_uint32_t reply_serial;
   DBusList *link;
   CancelPendingReplyData *cprd;
-  int count;
+  int recipient_pending_count;
+  int sender_pending_count;
   int limit;
 
   _dbus_assert (will_get_reply != NULL);
@@ -1940,7 +1941,8 @@ bus_connections_expect_reply (BusConnections  *connections,
   reply_serial = dbus_message_get_serial (reply_to_this);
 
   link = bus_expire_list_get_first_link (connections->pending_replies);
-  count = 0;
+  recipient_pending_count = 0;
+  sender_pending_count = 0;
   while (link != NULL)
     {
       pending = link->data;
@@ -1957,12 +1959,31 @@ bus_connections_expect_reply (BusConnections  *connections,
       link = bus_expire_list_get_next_link (connections->pending_replies,
                                             link);
       if (pending->will_get_reply == will_get_reply)
-        ++count;
+        ++recipient_pending_count;
+      if (pending->will_send_reply == will_send_reply)
+        ++sender_pending_count;
     }
+
+  limit = bus_context_get_max_messages_per_connection (connections->context);
+
+  if (sender_pending_count >= limit)
+  {
+      bus_context_log (connections->context, DBUS_SYSTEM_LOG_WARNING,
+                       "the maximum number of pending messages for "
+                       "\"%s\" (%s) has been reached "
+                       "(max_messages_per_connection=%d)",
+                       bus_connection_get_name (will_send_reply),
+                       bus_connection_get_loginfo (will_send_reply),
+                       limit);
+
+      dbus_set_error (error, DBUS_ERROR_LIMITS_EXCEEDED,
+		      "the maximum number of pending messages for service per connection has been reached");
+      return FALSE;
+  }
 
   limit = bus_context_get_max_replies_per_connection (connections->context);
 
-  if (count >= limit)
+  if (recipient_pending_count >= limit)
     {
       bus_context_log (connections->context, DBUS_SYSTEM_LOG_WARNING,
                        "The maximum number of pending replies for "

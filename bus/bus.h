@@ -64,6 +64,7 @@ typedef struct
   int max_services_per_connection;  /**< Max number of owned services for a single connection */
   int max_match_rules_per_connection; /**< Max number of match rules for a single connection */
   int max_replies_per_connection;     /**< Max number of replies that can be pending for each connection */
+  int max_messages_per_connection;      /**< Max number of pending messages addressed to a connection */
   int reply_timeout;                  /**< How long to wait before timing out a reply */
 } BusLimits;
 
@@ -120,6 +121,7 @@ int               bus_context_get_max_pending_activations        (BusContext    
 int               bus_context_get_max_services_per_connection    (BusContext       *context);
 int               bus_context_get_max_match_rules_per_connection (BusContext       *context);
 int               bus_context_get_max_replies_per_connection     (BusContext       *context);
+int               bus_context_get_max_messages_per_connection    (BusContext       *context);
 int               bus_context_get_reply_timeout                  (BusContext       *context);
 DBusRLimit *      bus_context_get_initial_fd_limit               (BusContext       *context);
 dbus_bool_t       bus_context_get_using_syslog                   (BusContext       *context);
