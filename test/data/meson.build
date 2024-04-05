@@ -143,6 +143,7 @@ data_in_to_install = [
     'valid-config-files/max-match-rules-per-connection.conf',
     'valid-config-files/max-names-per-connection.conf',
     'valid-config-files/max-replies-per-connection.conf',
+    'valid-config-files/max-messages-per-connection.conf',
     'valid-config-files/multi-user.conf',
     'valid-config-files/pending-fd-timeout.conf',
     'valid-config-files/send-destination-prefix-rules.conf',
