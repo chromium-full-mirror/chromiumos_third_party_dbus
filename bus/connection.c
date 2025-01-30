@@ -2001,10 +2001,13 @@ bus_connections_expect_reply (BusConnections  *connections,
       bus_context_log (connections->context, DBUS_SYSTEM_LOG_WARNING,
                        "the maximum number of pending messages for "
                        "\"%s\" (%s) has been reached "
-                       "(max_messages_per_connection=%d)",
+                       "(max_messages_per_connection=%d)"
+                       ", dropping call for \"%s\" (%s)",
                        bus_connection_get_name (will_send_reply),
                        bus_connection_get_loginfo (will_send_reply),
-                       limit);
+                       limit,
+                       bus_connection_get_name (will_get_reply),
+                       bus_connection_get_loginfo (will_get_reply));
 
       dbus_set_error (error, DBUS_ERROR_LIMITS_EXCEEDED,
 		      "the maximum number of pending messages for service per connection has been reached");
