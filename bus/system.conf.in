@@ -143,4 +143,8 @@
   <!-- Chromium talks to most services on the bus so needs a relatively
        large number of match rules. -->
   <limit name="max_match_rules_per_connection">4096</limit>
+
+  <!-- Chromium per connection limits. Milliseconds to time out a reply.
+       Current value is 1 hour: 1 * 3600 * 1000 = 3600000ms. -->
+  <limit name="reply_timeout">3600000</limit>
 </busconfig>
