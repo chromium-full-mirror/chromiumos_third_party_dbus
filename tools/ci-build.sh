@@ -214,12 +214,12 @@ case "$ci_host" in
             fi
             init_wine \
                 "${ci_builddir}/bin" \
-                "${ci_builddir}/subprojects/expat-2.4.8" \
-                "${ci_builddir}/subprojects/glib-2.72.2/gio" \
-                "${ci_builddir}/subprojects/glib-2.72.2/glib" \
-                "${ci_builddir}/subprojects/glib-2.72.2/gmodule" \
-                "${ci_builddir}/subprojects/glib-2.72.2/gobject" \
-                "${ci_builddir}/subprojects/glib-2.72.2/gthread" \
+                "${ci_builddir}"/subprojects/expat-* \
+                "${ci_builddir}"/subprojects/glib-*/gio \
+                "${ci_builddir}"/subprojects/glib-*/glib \
+                "${ci_builddir}"/subprojects/glib-*/gmodule \
+                "${ci_builddir}"/subprojects/glib-*/gobject \
+                "${ci_builddir}"/subprojects/glib-*/gthread \
                 "${dep_prefix}/bin" \
                 ${libgcc_path:+"$libgcc_path"}
         fi
