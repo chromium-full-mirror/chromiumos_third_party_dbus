@@ -91,8 +91,18 @@ case "$ci_distro" in
                 ;;
         esac
 
-        $sudo apt-get -qq -y update
         packages=()
+
+        case "$ci_host/$ci_suite" in
+            (*-w64-mingw32/bookworm)
+                echo "deb https://deb.debian.org/debian bookworm-backports main" >> /etc/apt/sources.list.d/backports.list
+                packages=("${packages[@]}" meson/bookworm-backports)
+                ;;
+
+            (*)
+                packages=("${packages[@]}" meson)
+                ;;
+        esac
 
         case "$ci_host" in
             (i686-w64-mingw32)
@@ -148,7 +158,6 @@ case "$ci_distro" in
             libsystemd-dev
             libx11-dev
             llvm
-            meson
             ninja-build
             sudo
             valgrind
@@ -161,6 +170,7 @@ case "$ci_distro" in
             zstd
         )
 
+        $sudo apt-get -qq -y update
         $sudo apt-get -qq -y --no-install-recommends install "${packages[@]}"
 
         packages=(
