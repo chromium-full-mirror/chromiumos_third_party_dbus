@@ -201,7 +201,7 @@ debian meson clang debug:
     - tar --strip-components=1 -C test/use-as-subproject/subprojects/dbus -xf $ci_builddir/meson-dist/*.tar.xz
     - meson setup --wrap-mode=forcefallback test/use-as-subproject/_build test/use-as-subproject
     - meson compile -C test/use-as-subproject/_build
-    - meson test -C test/use-as-subproject/_build
+    - "meson test -C test/use-as-subproject/_build dbus:"
 
 debian meson reduced:
   extends:
@@ -387,7 +387,7 @@ windows-meson-mingw-ucrt64:
     - C:\msys64\usr\bin\bash -lc "
         meson build &&
         ninja -j1 -C build &&
-        meson test --no-suite=runs-dbus-daemon -C build"
+        meson test --no-suite=runs-dbus-daemon -C build dbus:"
   artifacts:
     reports:
       junit: "build/meson-logs/testlog.junit.xml"
@@ -406,7 +406,7 @@ windows-meson-vs15-x86:
     - cmd.exe /C "C:\BuildTools\Common7\Tools\VsDevCmd.bat -host_arch=amd64 -arch=x86 &&
         meson --force-fallback-for=expat,glib,zlib build &&
         meson compile -C build &&
-        meson test --no-suite=runs-dbus-daemon -C build"
+        meson test --no-suite=runs-dbus-daemon -C build dbus:"
   artifacts:
     reports:
       junit: "build/meson-logs/testlog.junit.xml"

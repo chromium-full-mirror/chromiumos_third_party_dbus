@@ -465,7 +465,7 @@ case "$ci_buildsys" in
         # This is too slow and verbose to keep enabled at the moment
         export DBUS_TEST_MALLOC_FAILURES=0
 
-        [ "$ci_test" = no ] || meson test --print-errorlogs
+        [ "$ci_test" = no ] || meson test dbus: --print-errorlogs
         DESTDIR=DESTDIR meson install
         ( cd DESTDIR && find . -ls)
 
