@@ -366,6 +366,12 @@ fallback_subproject_options = [
     'werror=false',
 ]
 
+if cc.get_id() != 'msvc'
+    # TODO: Ideally we'd have default_library=static with MSVC too,
+    # but see https://gitlab.freedesktop.org/dbus/dbus/-/issues/549
+    fallback_subproject_options += ['default_library=static']
+endif
+
 # Controls whether message bus daemon is built. Tests which depend on
 # a running dbus-daemon will be disabled if message_bus is not set.
 message_bus = get_option('message_bus')
