@@ -394,7 +394,12 @@ endif
 use_glib = glib.found() and gio.found()
 
 if message_bus
-    expat = dependency('expat')
+    expat = dependency(
+        'expat',
+        default_options: [
+            'build_tests=false',
+        ],
+    )
 else
     expat = dependency('', required: false)
 endif
