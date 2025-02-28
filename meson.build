@@ -384,6 +384,7 @@ else
         required: get_option('modular_tests'),
         fallback: ['glib', 'libglib_dep'],
         default_options: fallback_subproject_options + [
+            'introspection=disabled',
             'tests=false',
         ],
     )
