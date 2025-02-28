@@ -374,7 +374,7 @@ else
         required: get_option('modular_tests'),
         fallback: ['glib', 'libglib_dep'],
         default_options: [
-           'tests=false',
+            'tests=false',
         ],
     )
 endif
