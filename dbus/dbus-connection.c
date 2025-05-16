@@ -1085,7 +1085,7 @@ _dbus_connection_acquire_io_path (DBusConnection *connection,
   
   if (connection->io_path_acquired)
     {
-      if (timeout_milliseconds != -1)
+      if (timeout_milliseconds >= 0)
         {
           _dbus_verbose ("waiting %d for IO path to be acquirable\n",
                          timeout_milliseconds);
