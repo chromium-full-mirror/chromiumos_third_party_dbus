@@ -445,7 +445,7 @@ else
     endif
 endif
 
-if get_option('epoll').disabled()
+if get_option('epoll').disabled() or (get_option('epoll').auto() and (host_os != 'linux'))
     use_linux_epoll = false
 else
     use_linux_epoll = (
