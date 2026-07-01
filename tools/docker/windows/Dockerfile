@@ -53,7 +53,7 @@ RUN C:\TEMP\Install.cmd C:\TEMP\vs_buildtools.exe --quiet --wait --norestart --n
 # RUN C:\TEMP\expat.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
 RUN git clone --depth 1 --branch R_2_4_2 https://github.com/libexpat/libexpat
 WORKDIR "/libexpat/expat"
-RUN cmake --install-prefix c:/ -G '"Visual Studio 15 2017 Win64"' .
+RUN cmake --install-prefix c:/ -G '"Visual Studio 15 2017"' -A x64 .
 RUN cmake --build . --config Release
 RUN cmake --install . --config Release
 

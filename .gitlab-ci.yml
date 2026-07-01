@@ -371,7 +371,7 @@ windows vs15-64 cmake:
     - .cmake-common
     - .win-build
   script:
-    - cmake -DCMAKE_PREFIX_PATH=C:/ -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=Debug -DDBUS_ENABLE_VERBOSE_MODE=OFF -DDBUS_ENABLE_INTRUSIVE_TESTS=ON -S . -B build
+    - cmake -DCMAKE_PREFIX_PATH=C:/ -G "Visual Studio 15 2017" -A x64 -DCMAKE_BUILD_TYPE=Debug -DDBUS_ENABLE_VERBOSE_MODE=OFF -DDBUS_ENABLE_INTRUSIVE_TESTS=ON -S . -B build
     - cmake --build build --config Debug
     - cmake --install build --config Debug
     # FIXME: a few tests timeout on gitlab runner for unknown reason
