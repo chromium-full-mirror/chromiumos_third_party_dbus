@@ -227,11 +227,6 @@ case "$ci_distro" in
             (opensuse-leap)
                 version=$(. /etc/os-release; echo ${VERSION_ID} | sed 's, ,_,g')
                 repo="openSUSE_Leap_$version"
-                # Use a newer CMake (3.21) version for JUnit XML support on openSUSE Leap.
-                if ! zypper lr windows_mingw > /dev/null; then
-                    $zypper ar --refresh --no-gpgcheck \
-                        "https://download.opensuse.org/repositories/windows:/mingw/$repo/windows:mingw.repo"
-                fi
                 ;;
             (opensuse-tumbleweed)
                 repo="openSUSE_Tumbleweed"
