@@ -253,7 +253,7 @@ case "$ci_distro" in
                     bits="32"
                 fi
                 if ! zypper lr "windows_mingw_win${bits}" > /dev/null; then
-                    $zypper ar --refresh --no-gpgcheck \
+                    $zypper ar \
                         "https://download.opensuse.org/repositories/windows:/mingw:/win${bits}/$repo/windows:mingw:win${bits}.repo"
                 fi
                 packages=(
@@ -278,6 +278,11 @@ case "$ci_distro" in
                 )
                 ;;
         esac
+
+        # refresh repos
+        $zypper --gpg-auto-import-keys refresh
+
+        # install packages
         $zypper install --allow-vendor-change "${packages[@]}"
 
         if [ "$ci_in_docker" = yes ]; then
