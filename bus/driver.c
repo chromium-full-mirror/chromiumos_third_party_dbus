@@ -1036,11 +1036,14 @@ bus_driver_send_or_activate (BusTransaction *transaction,
   const char *service_name;
   DBusString service_string;
 
+  _dbus_assert (transaction != NULL);
+  _dbus_assert (message != NULL);
   _DBUS_ASSERT_ERROR_IS_CLEAR (error);
 
   service_name = dbus_message_get_destination (message);
 
   _dbus_assert (service_name != NULL);
+  _dbus_assert (dbus_message_get_sender (message) != NULL);
 
   _dbus_string_init_const (&service_string, service_name);
 
