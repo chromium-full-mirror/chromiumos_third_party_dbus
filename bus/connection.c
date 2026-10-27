@@ -2390,6 +2390,7 @@ bus_transaction_capture_error_reply (BusTransaction  *transaction,
   if (!dbus_message_set_sender (reply, DBUS_SERVICE_DBUS))
     goto out;
 
+  bus_message_from_driver_ensure_serial (reply, addressed_recipient);
   ret = bus_transaction_capture (transaction, NULL, addressed_recipient, reply);
 
 out:
