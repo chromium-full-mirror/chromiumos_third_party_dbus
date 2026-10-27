@@ -2316,6 +2316,14 @@ bus_transaction_get_context (BusTransaction  *transaction)
 /**
  * Reserve enough memory to capture the given message if the
  * transaction goes through.
+ *
+ * The message must already have a serial number and a sender.
+ * For messages received from a client, the client was responsible for
+ * assigning a serial number and bus_dispatch() was responsible for
+ * assigning the sender.
+ * For messages generated internally by the dbus-daemon, the source of
+ * the message is responsible for setting the sender to DBUS_SERVICE_DBUS
+ * and assigning a serial number.
  */
 dbus_bool_t
 bus_transaction_capture (BusTransaction *transaction,
@@ -2328,6 +2336,9 @@ bus_transaction_capture (BusTransaction *transaction,
   DBusList *link;
   DBusList *recipients = NULL;
   dbus_bool_t ret = FALSE;
+
+  _dbus_assert (dbus_message_get_serial (message) != 0);
+  _dbus_assert (dbus_message_get_sender (message) != NULL);
 
   connections = bus_context_get_connections (transaction->context);
 
