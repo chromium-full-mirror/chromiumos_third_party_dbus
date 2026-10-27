@@ -132,6 +132,42 @@ static void bus_connection_drop_pending_replies (BusConnections  *connections,
 
 static dbus_bool_t expire_incomplete_timeout (void *data);
 
+/* This has the same logic as _dbus_connection_get_next_client_serial(),
+ * but instead of one serial number per connection, the message bus
+ * maintains one global serial number to be used on broadcasts. */
+static dbus_uint32_t
+get_next_broadcast_serial (void)
+{
+  /* Start just before the wrap-around, so that the wrap-around is tested */
+  static dbus_uint32_t next_broadcast_serial = 0xFFFFFFFFu;
+  dbus_uint32_t ret;
+
+  ret = next_broadcast_serial++;
+
+  if (next_broadcast_serial == 0)
+    next_broadcast_serial = 1;
+
+  return ret;
+}
+
+void
+bus_message_from_driver_ensure_serial (DBusMessage    *message,
+                                       DBusConnection *addressed_recipient)
+{
+  if (dbus_message_get_serial (message) == 0)
+    {
+      dbus_uint32_t serial;
+
+      if (addressed_recipient != NULL)
+        serial = _dbus_connection_get_next_client_serial (addressed_recipient);
+      else
+        serial = get_next_broadcast_serial ();
+
+      _dbus_assert (serial != 0);
+      dbus_message_set_serial (message, serial);
+    }
+}
+
 #define BUS_CONNECTION_DATA(connection) (dbus_connection_get_data ((connection), connection_data_slot))
 
 static DBusLoop*
@@ -2390,13 +2426,7 @@ bus_transaction_send_from_driver (BusTransaction *transaction,
    * connection, when the transaction is committed, but that's too late
    * in this case.
    */
-  if (dbus_message_get_serial (message) == 0)
-    {
-      dbus_uint32_t next_serial;
-
-      next_serial = _dbus_connection_get_next_client_serial (connection);
-      dbus_message_set_serial (message, next_serial);
-    }
+  bus_message_from_driver_ensure_serial (message, connection);
 
   if (bus_connection_is_active (connection))
     {
