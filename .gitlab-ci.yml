@@ -28,7 +28,7 @@ workflow:
 
 include:
   - project: 'freedesktop/ci-templates'
-    ref: c7c20a7efb11ec9e773519bcf9180b4a329e9aa3
+    ref: e6415f6cc602d8afe4731d4f21b47f3eda03f879
     file:
       - '/templates/debian.yml'
       - '/templates/freebsd.yml'
