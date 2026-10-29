@@ -103,6 +103,13 @@ Bug fixes:
   disable unnecessary features and try to link them statically
   (dbus!516, Simon McVittie)
 
+• When installed with Meson as uid 0 on Unix, make the permissions of
+  the dbus-daemon-launch-helper consistent with those suggested when
+  installing into a DESTDIR (04750), which are used in distributions in
+  practice. Distributions and sysadmins can still set narrower permissions
+  (04110) if desired.
+  (dbus#575, Simon McVittie)
+
 • On non-Linux platforms, never try to compile with Linux epoll support,
   even if the OS has a compatibility interface for epoll
   (dbus#557; Alan Coopersmith, Jonathan Perkins)
@@ -116,8 +123,8 @@ Bug fixes:
 • Fix compiler warnings in dbus-send(1)
   (dbus!558, dbus!559; Simon McVittie)
 
-• Avoid using deprecated functions if compiled against Expat 2.9.0 or later
-  (dbus!561, Oleg Tsvetkov)
+• Avoid deprecation warnings if compiled against Expat 2.9.0 or later
+  (dbus!561, dbus!564; Oleg Tsvetkov, Simon McVittie)
 
 • Update fallback subprojects for GLib and Expat
   (dbus!426, dbus!429; Simon McVittie)
