@@ -91,6 +91,13 @@ case "$ci_distro" in
                 ;;
         esac
 
+        packages=(
+            clang
+        )
+
+        $sudo apt-get -qq -y update
+        $sudo apt-get -qq -y install "${packages[@]}"
+
         packages=()
 
         case "$ci_host/$ci_suite" in
@@ -172,12 +179,6 @@ case "$ci_distro" in
 
         $sudo apt-get -qq -y update
         $sudo apt-get -qq -y --no-install-recommends install "${packages[@]}"
-
-        packages=(
-            clang
-        )
-
-        $sudo apt-get -qq -y install "${packages[@]}"
 
         if [ "$ci_in_docker" = yes ]; then
             # Add the user that we will use to do the build inside the
