@@ -93,6 +93,7 @@ case "$ci_distro" in
 
         packages=(
             clang
+            libclang-rt-dev
         )
 
         $sudo apt-get -qq -y update
