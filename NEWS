@@ -49,9 +49,12 @@ Internal changes:
 • Fix test failure if DBUS_TEST_DBUS_MONITOR is unset
   (dbus#424, Philip Withnall)
 
-• CI fixes (dbus#546, dbus#547, dbus#548, dbus#558, dbus#572,
-  dbus!515, dbus!528, dbus!531, dbus!556, dbus!557;
-  Simon McVittie, Ralf Habacker)
+• CI fixes
+  (dbus#546, dbus#547, dbus#548, dbus#558, dbus#572, dbus#578, dbus#580,
+  dbus#582,
+  dbus!528, dbus!531, dbus!556, dbus!557, dbus!569, dbus!577, dbus!580,
+  dbus!589;
+  Simon McVittie, Gleb Popov, Ralf Habacker)
 
 dbus 1.16.2 (2025-02-27)
 ========================
