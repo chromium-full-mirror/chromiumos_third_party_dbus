@@ -300,6 +300,40 @@ test_poll_negative (Fixture *f,
     g_assert_cmpint (poll_fds[i].revents, ==, 0);
 }
 
+/*
+ * Test that on Unix, _dbus_poll() has the POSIX poll() behaviour of
+ * reporting POLLNVAL for invalid fds, even if emulated in terms of select().
+ */
+static void
+test_poll_invalid (Fixture *f,
+                   gconstpointer context G_GNUC_UNUSED)
+{
+  DBusPollFD poll_fd;
+  int not_fd = -1;
+  int res;
+
+  /* not_fd is briefly a valid fd, but then we close it */
+  not_fd = dup (STDOUT_FILENO);
+
+  if (not_fd < 0)
+    g_error ("dup: %s", g_strerror (errno));
+
+  close (not_fd);
+  /* Now not_fd is *not* a valid fd */
+  res = fcntl (not_fd, F_GETFD, 0);
+  g_assert_cmpint ((res == -1 ? errno : 0), ==, EBADF);
+
+  memset (&poll_fd, '\0', sizeof (poll_fd));
+  poll_fd.fd = not_fd;
+  poll_fd.events = _DBUS_POLLOUT;
+  poll_fd.revents = -1;
+
+  res = _dbus_poll (&poll_fd, 1, 0);
+
+  g_assert_cmpint (res, ==, 1);
+  g_assert_cmpint (poll_fd.revents, ==, _DBUS_POLLNVAL);
+}
+
 static void
 test_set_all_close_on_exec (Fixture *f,
                             gconstpointer context G_GNUC_UNUSED)
@@ -420,6 +454,8 @@ main (int argc,
 #ifdef G_OS_UNIX
   g_test_add ("/sysdeps/close_all",
               Fixture, NULL, setup, test_close_all, teardown);
+  g_test_add ("/sysdeps/poll_invalid",
+              Fixture, NULL, setup, test_poll_invalid, teardown);
   g_test_add ("/sysdeps/poll_negative",
               Fixture, NULL, setup, test_poll_negative, teardown);
   g_test_add ("/sysdeps/set_all_close_on_exec",
