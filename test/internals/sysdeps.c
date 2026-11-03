@@ -334,6 +334,77 @@ test_poll_invalid (Fixture *f,
   g_assert_cmpint (poll_fd.revents, ==, _DBUS_POLLNVAL);
 }
 
+/*
+ * Test that on Unix, if _dbus_poll() is emulated in terms of select(),
+ * a fd >= FD_SETSIZE is rejected with POLLNVAL rather than causing a
+ * buffer overflow.
+ */
+static void
+test_poll_high_fd (Fixture *f,
+                   gconstpointer context G_GNUC_UNUSED)
+{
+  DBusError d_error = DBUS_ERROR_INIT;
+  DBusPollFD poll_fd;
+  int high_fd = -1;
+  int res;
+
+  if (!_dbus_rlimit_raise_fd_limit (&d_error))
+    {
+      g_test_message ("_dbus_rlimit_raise_fd_limit: %s: %s",
+                      d_error.name, d_error.message);
+      g_test_skip ("Cannot raise fd limit to test poll() on high fd");
+      return;
+    }
+
+#ifdef F_DUPFD
+  high_fd = fcntl (STDOUT_FILENO, F_DUPFD, FD_SETSIZE);
+#else
+  high_fd = -1;
+  errno = ENOSYS;
+#endif
+
+  if (high_fd < 0)
+    {
+      g_test_message ("fcntl (STDOUT_FILENO, F_DUPFD, %d): %s",
+                      FD_SETSIZE, g_strerror (errno));
+      g_test_skip ("Cannot create high fd to test poll()");
+      return;
+    }
+
+  g_assert_cmpint (high_fd, >=, FD_SETSIZE);
+  g_test_message ("Obtained high fd %d", high_fd);
+
+  memset (&poll_fd, '\0', sizeof (poll_fd));
+  poll_fd.fd = high_fd;
+  poll_fd.events = _DBUS_POLLOUT;
+  poll_fd.revents = -1;
+
+  res = _dbus_poll (&poll_fd, 1, 0);
+
+#if defined(BROKEN_POLL) || !defined(HAVE_POLL)
+  g_test_message ("_dbus_poll() is emulated in terms of select()");
+  g_assert_cmpint (res, ==, 1);
+  g_assert_cmpint (poll_fd.revents, ==, _DBUS_POLLNVAL);
+#else
+  g_test_message ("_dbus_poll() is implemented in terms of poll()");
+  g_test_message ("%d event(s) ready immediately", res);
+
+  /* No assertion about whether standard output is ready for writing */
+  if (res == 0)
+    {
+      g_test_message ("A copy of stdout was not ready for writing");
+    }
+  else
+    {
+      g_test_message ("A copy of stdout was ready");
+      g_assert_cmpint (res, ==, 1);
+      g_assert_cmpint (poll_fd.revents, !=, 0);
+    }
+#endif
+
+  close (high_fd);
+}
+
 static void
 test_set_all_close_on_exec (Fixture *f,
                             gconstpointer context G_GNUC_UNUSED)
@@ -456,6 +527,8 @@ main (int argc,
               Fixture, NULL, setup, test_close_all, teardown);
   g_test_add ("/sysdeps/poll_invalid",
               Fixture, NULL, setup, test_poll_invalid, teardown);
+  g_test_add ("/sysdeps/poll_high_fd",
+              Fixture, NULL, setup, test_poll_high_fd, teardown);
   g_test_add ("/sysdeps/poll_negative",
               Fixture, NULL, setup, test_poll_negative, teardown);
   g_test_add ("/sysdeps/set_all_close_on_exec",
