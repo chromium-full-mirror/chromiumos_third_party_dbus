@@ -271,6 +271,35 @@ test_close_all (Fixture *f,
     }
 }
 
+/*
+ * Test that on Unix, _dbus_poll() has the POSIX poll() behaviour of
+ * ignoring negative fds, even if emulated in terms of select().
+ */
+static void
+test_poll_negative (Fixture *f,
+                    gconstpointer context G_GNUC_UNUSED)
+{
+  DBusPollFD poll_fds[3];
+  int ready;
+  size_t i;
+
+  memset (poll_fds, '\0', sizeof (poll_fds));
+
+  for (i = 0; i < G_N_ELEMENTS (poll_fds); i++)
+    {
+      poll_fds[i].fd = -(i + 1);
+      poll_fds[i].events = _DBUS_POLLIN | _DBUS_POLLOUT;
+      poll_fds[i].revents = -1;
+    }
+
+  ready = _dbus_poll (poll_fds, G_N_ELEMENTS (poll_fds), 0);
+
+  g_assert_cmpint (ready, ==, 0);
+
+  for (i = 0; i < G_N_ELEMENTS (poll_fds); i++)
+    g_assert_cmpint (poll_fds[i].revents, ==, 0);
+}
+
 static void
 test_set_all_close_on_exec (Fixture *f,
                             gconstpointer context G_GNUC_UNUSED)
@@ -391,6 +420,8 @@ main (int argc,
 #ifdef G_OS_UNIX
   g_test_add ("/sysdeps/close_all",
               Fixture, NULL, setup, test_close_all, teardown);
+  g_test_add ("/sysdeps/poll_negative",
+              Fixture, NULL, setup, test_poll_negative, teardown);
   g_test_add ("/sysdeps/set_all_close_on_exec",
               Fixture, NULL, setup, test_set_all_close_on_exec, teardown);
 #endif
