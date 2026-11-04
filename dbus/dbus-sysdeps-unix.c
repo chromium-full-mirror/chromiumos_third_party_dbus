@@ -462,7 +462,9 @@ _dbus_socket_unpack_or_close_scm_rights (struct msghdr *m,
                 }
             }
 
-          memcpy (fds, payload, fds_to_use * sizeof (int));
+          if (fds_to_use != 0)
+            memcpy (fds, payload, fds_to_use * sizeof (int));
+
           found = TRUE;
           /* This narrowing cast from size_t to unsigned int cannot
            * overflow because we have chosen fds_to_use
