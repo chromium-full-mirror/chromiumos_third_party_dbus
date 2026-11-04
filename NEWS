@@ -42,6 +42,18 @@ Build-time configuration:
   In previous releases, any non-empty setting was an error on non-Solaris
   platforms.
 
+Denial-of-service fixes:
+
+• Prevent a denial-of-service vulnerability on the system bus:
+  if a privileged user was running a monitor such as `dbus-monitor --system`
+  or `busctl monitor --system`, then an unprivileged user could cause the
+  dbus-daemon to crash by arranging for delivery of a broadcast signal
+  from the dbus-daemon to be prevented, for example by filling up the
+  outgoing message queue towards a client that subscribed to it.
+  This vulnerability could be seen as an incomplete fix for CVE-2023-34969.
+  Thanks to parkma99.
+  (dbus#576, CVE-2026-120749; Simon McVittie, David King)
+
 Enhancements:
 
 • D-Bus Specification 0.44:
