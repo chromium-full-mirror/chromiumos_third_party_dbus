@@ -2267,6 +2267,16 @@ _dbus_read_credentials_socket  (DBusSocket       client_fd,
     struct cmsghdr hdr;
     char cred[CMSG_SPACE (sizeof (struct cmsgcred))];
   } cmsg;
+#elif defined(DBUS_ENABLE_INTRUSIVE_TESTS)
+  /* To reproduce https://gitlab.freedesktop.org/dbus/dbus/-/work_items/588
+   * on other platforms, by behaving as though struct cmsgcred was
+   * supported */
+  union {
+    struct cmsghdr hdr;
+    /* Just some random amount of space that is certainly enough to
+     * hold some file descriptors */
+    char fake_cred[CMSG_SPACE (1024)];
+  } cmsg;
 #endif
 
   /* The POSIX spec certainly doesn't promise this, but
@@ -2297,6 +2307,10 @@ _dbus_read_credentials_socket  (DBusSocket       client_fd,
   _DBUS_ZERO(cmsg);
   msg.msg_control = (caddr_t) &cmsg;
   msg.msg_controllen = CMSG_SPACE (sizeof (struct cmsgcred));
+#elif defined(DBUS_ENABLE_INTRUSIVE_TESTS)
+  _DBUS_ZERO (cmsg);
+  msg.msg_control = &cmsg;
+  msg.msg_controllen = sizeof (cmsg);
 #endif
 
  again:
