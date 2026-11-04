@@ -2257,6 +2257,7 @@ _dbus_read_credentials_socket  (DBusSocket       client_fd,
   dbus_pid_t pid_read;
   int bytes_read;
   int pid_fd_read;
+  unsigned int n_fds;
 
 #ifdef HAVE_CMSGCRED
   union {
@@ -2313,7 +2314,22 @@ _dbus_read_credentials_socket  (DBusSocket       client_fd,
                       _dbus_strerror (errno));
       return FALSE;
     }
-  else if (bytes_read == 0)
+
+  n_fds = 0;
+
+  if (!_dbus_socket_unpack_or_close_scm_rights (&msg, NULL, &n_fds))
+    {
+      /* The only way this can currently fail is ENOSPC,
+       * representing MSG_CTRUNC, which would indicate that the message
+       * had more SCM_RIGHTS fds than the 0 we were willing to accept. */
+      dbus_set_error (error, DBUS_ERROR_FAILED,
+                      "Credentials byte should not have had attached file descriptors");
+      return FALSE;
+    }
+
+  _dbus_assert (n_fds == 0);
+
+  if (bytes_read == 0)
     {
       /* this should not happen unless we are using recvmsg wrong,
        * so is essentially here for paranoia
