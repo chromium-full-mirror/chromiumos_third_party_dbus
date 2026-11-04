@@ -276,6 +276,7 @@ int _dbus_listen_tcp_socket   (const char     *host,
                                DBusError      *error);
 DBusSocket _dbus_accept       (DBusSocket      listen_fd);
 
+DBUS_INTRUSIVE_TESTS_EXPORT
 dbus_bool_t _dbus_read_credentials_socket (DBusSocket        client_fd,
                                            DBusCredentials  *credentials,
                                            DBusError        *error);

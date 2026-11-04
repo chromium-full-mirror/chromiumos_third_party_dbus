@@ -9,6 +9,7 @@
 
 #include <glib/gstdio.h>
 
+#include "dbus/dbus-credentials.h"
 #include "dbus/dbus-sysdeps.h"
 #include "dbus/dbus-sysdeps-unix.h"
 #include "test-utils.h"
@@ -325,6 +326,49 @@ test_none_accepted (Fixture *f,
 }
 
 static void
+test_with_credentials_byte (Fixture *f,
+                            const void *context G_GNUC_UNUSED)
+{
+  DBusError d_error = DBUS_ERROR_INIT;
+  const int n = 1;
+  int *fds_to_send;
+  DBusCredentials *creds;
+
+  f->test_name = G_STRFUNC;
+
+  if (f->skip)
+    return;
+
+  creds = _dbus_credentials_new ();
+
+  if (creds == NULL)
+    g_error ("OOM");
+
+  fds_to_send = fixture_open_n_fds (f, n);
+  fixture_send_byte_with_n_fds (f, fds_to_send, n);
+
+  /* We leave it undefined whether having a fd attached to the
+   * initial message will result in _dbus_read_credentials_socket()
+   * failing or not; but even if it doesn't fail for that reason,
+   * it will fail because the initial byte that we sent in
+   * fixture_send_byte_with_n_fds() wasn't the '\0' that the D-Bus
+   * protocol requires. */
+  if (_dbus_read_credentials_socket (f->recipient, creds, &d_error))
+    {
+      g_error ("Expected _dbus_read_credentials_socket to fail");
+    }
+  else
+    {
+      g_test_message ("_dbus_read_credentials_socket: %s: %s",
+                      d_error.name, d_error.message);
+      dbus_error_free (&d_error);
+    }
+
+  free_n_fds (fds_to_send, n);
+  _dbus_credentials_unref (creds);
+}
+
+static void
 teardown (Fixture *f,
           const void *context G_GNUC_UNUSED)
 {
@@ -347,6 +391,8 @@ main (int argc,
               Fixture, NULL, setup, test_none_accepted, teardown);
   g_test_add ("/scm_rights/normal",
               Fixture, NULL, setup, test_normal, teardown);
+  g_test_add ("/scm_rights/with_credentials_byte",
+              Fixture, NULL, setup, test_with_credentials_byte, teardown);
 
   ret = g_test_run ();
   dbus_shutdown ();
