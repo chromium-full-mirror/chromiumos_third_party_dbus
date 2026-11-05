@@ -42,6 +42,13 @@ Proposed fixes can be attached to the issue using the output of
 or push proposed changes fixing an undisclosed security vulnerability
 to any public location.**
 
+If you allocate a CVE ID or similar unique identifier for a vulnerability,
+please leave a comment with the CVE ID on the relevant issue report,
+or create a new issue report if necessary
+(marked as confidential if the vulnerability is not yet known to the public).
+The dbus maintainers cannot provide support for CVE IDs that are allocated
+without their knowledge.
+
 ## Mailing list
 
 The D-Bus mailing list is dbus@lists.freedesktop.org; discussion of
