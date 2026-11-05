@@ -32,7 +32,7 @@ or by reporting a Gitlab issue at
 https://gitlab.freedesktop.org/dbus/dbus/issues/new and marking it
 as "confidential".
 For appropriate patches, please create a "confidential" merge request,
-see [Sending a merge request](#sending-a-merge-request] for details.
+see [Sending a merge request](#sending-a-merge-request) for details.
 
 ## Mailing list
 
