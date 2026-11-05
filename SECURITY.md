@@ -1,5 +1,17 @@
 # dbus security
 
+dbus does not come with any guarantee of security,
+and its maintainers are not suppliers of a finished product.
+Please see the applicable licenses (in the `LICENSES/` directory)
+for more details.
+If a system integrator has chosen to rely on dbus as part of a product,
+service or larger system,
+the system integrator is responsible for that decision.
+
+The maintainers of dbus try to address security vulnerabilities when
+it is feasible to do so,
+within the limits of available time and resources.
+
 ## Reporting security vulnerabilities
 
 If you find a security vulnerability that is not known to the public,
