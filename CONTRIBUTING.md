@@ -27,10 +27,10 @@ git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
 ## Reporting security vulnerabilities
 
 If you find a security vulnerability that is not known to the public,
-please report it privately to dbus-security@lists.freedesktop.org
+please report it privately to <dbus-security@lists.freedesktop.org>
 or by reporting a Gitlab issue at
-https://gitlab.freedesktop.org/dbus/dbus/issues/new and marking it
-as "confidential".
+<https://gitlab.freedesktop.org/dbus/dbus/-/work_items/new>
+and marking it as "confidential".
 
 ## Mailing list
 
