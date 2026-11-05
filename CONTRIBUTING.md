@@ -32,6 +32,9 @@ or by reporting a Gitlab issue at
 <https://gitlab.freedesktop.org/dbus/dbus/-/work_items/new>
 and marking it as "confidential".
 
+If you are unsure whether a bug is a security vulnerability or not,
+please report it as confidential.
+
 Proposed fixes can be attached to the issue using the output of
 `git format-patch`.
 
