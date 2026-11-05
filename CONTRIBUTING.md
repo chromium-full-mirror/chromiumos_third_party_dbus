@@ -32,6 +32,13 @@ or by reporting a Gitlab issue at
 <https://gitlab.freedesktop.org/dbus/dbus/-/work_items/new>
 and marking it as "confidential".
 
+Proposed fixes can be attached to the issue using the output of
+`git format-patch`.
+
+**Please do not create a merge request for undisclosed security vulnerabilities,
+or push proposed changes fixing an undisclosed security vulnerability
+to any public location.**
+
 ## Mailing list
 
 The D-Bus mailing list is dbus@lists.freedesktop.org; discussion of
@@ -131,6 +138,9 @@ We won't reject patches that lack S-o-b, but it is strongly recommended.
 
 When you consider your changes to be ready for merging to mainline:
 
+* **If you are working on a fix for an undisclosed security vulnerability,
+  stop here: do not create a merge request.
+  Instead see "Reporting security vulnerabilities", above.**
 * create a personal fork of <https://gitlab.freedesktop.org/dbus/dbus>
   on freedesktop.org Gitlab
 * push your changes to your personal fork as a branch
