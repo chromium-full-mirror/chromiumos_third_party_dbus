@@ -74,3 +74,33 @@ They should not be used on Unix systems.
 
 These TCP-based transports do not defend against denial of service
 by local users, and therefore should not be used on multi-user systems.
+
+### Assertions, intrusive tests and other instrumentation
+
+dbus can be compiled with assertions
+(`meson setup -Dasserts=true` or `cmake -DDBUS_DISABLE_ASSERT=OFF`)
+and/or with "intrusive tests" enabled
+(`meson setup -Dintrusive_tests=true` or
+`cmake -DDBUS_ENABLE_INTRUSIVE_TESTS=ON`).
+Both of these insert extra instrumentation into libdbus and the dbus-daemon
+to detect situations that should have been impossible and provide better
+test coverage,
+but this instrumentation adds extra code and is a security risk.
+
+A production version of dbus that will be included in an operating system
+or other product should never have the intrusive tests enabled.
+Similarly,
+a production version of dbus should not enable other forms of
+instrumentation such as coverage recording or AddressSanitizer.
+
+Similarly,
+enabling assertions in a production version of dbus is not recommended,
+and distributors should be aware that a version of dbus with assertions
+enabled will be more susceptible to denial-of-service.
+
+Developers may enable these instrumentation features for debugging and
+testing,
+and they can be used to make security vulnerabilities easier to reproduce,
+but if there is a bug that is only exploitable when compiled with these
+instrumentation features,
+it will not be considered to be a security vulnerability.
