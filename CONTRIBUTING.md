@@ -305,6 +305,9 @@ which may harm performance or security. A production version of dbus
 that will be included in an operating system should never have the
 intrusive tests enabled.
 
+Older versions of dbus had "embedded tests",
+which are the same tests that are now referred to as intrusive tests.
+
 If possible, new test coverage should be provided via modular tests,
 preferably using GLib's GTest framework. `test/dbus-daemon.c` is a good
 example.
