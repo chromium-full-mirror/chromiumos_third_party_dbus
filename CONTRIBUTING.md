@@ -239,7 +239,10 @@ system or by using an environment like MSYS2 on Windows.
 There is also a CMake build system. This is primarily there to make it
 easier to build dbus on Windows, using either a MSYS2/mingw environment
 or the MSVC compiler from Microsoft Visual Studio. It can also be used
-on a GNU/Linux system, but this is not recommended for OS integrators.
+on a GNU/Linux system, but this is not recommended for OS integrators:
+the reason for it to work and be tested on non-Windows is to make it less
+likely that contributions from Unix developers will break the
+CMake/Windows build.
 
 Changes contributed to dbus must not break the build for either of these
 build systems. It is OK for the CMake build system to support fewer
