@@ -230,8 +230,8 @@ tools/ci-build.sh is under this license.
 
 ### Build systems
 
-The primary build system for dbus uses the GNU Autotools suite (Autoconf,
-Automake and Libtool). This build system is strongly recommended for
+The primary build system for dbus uses Meson.
+This build system is strongly recommended for
 Unix OS integrators. It can also be used to compile dbus for Windows
 using the mingw-w64 compiler suite, either by cross-compiling on a Unix
 system or by using an environment like MSYS2 on Windows.
