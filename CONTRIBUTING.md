@@ -49,6 +49,8 @@ or create a new issue report if necessary
 The dbus maintainers cannot provide support for CVE IDs that are allocated
 without their knowledge.
 
+Please see [SECURITY.md](SECURITY.md) for more details.
+
 ## Mailing list
 
 The D-Bus mailing list is dbus@lists.freedesktop.org; discussion of
@@ -159,7 +161,14 @@ When you consider your changes to be ready for merging to mainline:
 
 ### Security guidelines
 
-Most of D-Bus is security sensitive.  Guidelines related to that:
+Most of D-Bus is security sensitive.
+
+For backward compatibility and historical reasons,
+some parts of dbus are not feasible to security-support
+(please see [SECURITY.md](SECURITY.md) for more details),
+but all new code should be written with security in mind.
+
+Guidelines related to that:
 
  - avoid `memcpy()`, `sprintf()`, `strlen()`, `snprintf()`, `strlcat()`,
    `strstr()`, `strtok()`, or any of this stuff. Use `DBusString`.
