@@ -41,6 +41,13 @@ without their knowledge.
 
 ## Scope
 
+### Denial of service
+
+dbus makes an attempt to avoid trivial denial-of-service issues,
+but should not be relied on to be resistant to denial-of-service
+via resource exhaustion,
+especially on systems with actively malicious local users.
+
 ### Operating systems
 
 From a security point of view,
