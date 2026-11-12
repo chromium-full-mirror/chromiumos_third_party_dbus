@@ -2465,7 +2465,17 @@ _dbus_read_credentials_socket  (DBusSocket       client_fd,
       }
     else
       {
+#ifdef __APPLE__
+        /* macOS's struct xucred has no cr_pid; use LOCAL_PEERPID */
+        pid_t peer_pid = 0;
+        socklen_t pid_len = sizeof (peer_pid);
+
+        if (getsockopt (client_fd.fd, SOL_LOCAL, LOCAL_PEERPID,
+                        &peer_pid, &pid_len) == 0 && pid_len == sizeof (peer_pid))
+          pid_read = peer_pid;
+#else
         pid_read = cr.cr_pid;
+#endif
         uid_read = cr.cr_uid;
       }
 #elif defined(HAVE_CMSGCRED)
