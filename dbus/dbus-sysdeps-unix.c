@@ -395,7 +395,6 @@ _dbus_write_socket (DBusSocket        fd,
  * have been lost, return FALSE with errno set to ENOSPC and n_fds set to 0.
  *
  * @param m the message header from recvmsg
- * @param fds the buffer to accept fds into
  * @param fds array to place read file descriptors in
  * @param n_fds on input space in fds array, on output how many fds actually got read
  * @returns TRUE on success, FALSE with errno set on failure
